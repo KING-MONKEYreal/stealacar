@@ -236,6 +236,6 @@ credit.Size = UDim2.new(0,250,0,25)
 credit.Position = UDim2.new(0,10,1,-30)
 credit.BackgroundTransparency = 1
 credit.TextColor3 = Color3.fromRGB(255,255,255)
-credit.Text = "Made by gw_jayy0061"
+credit.Text = "Made by Chance"
 credit.TextScaled = true
 credit.Parent = mainFrame
