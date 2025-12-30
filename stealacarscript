@@ -1,0 +1,241 @@
+local player = game.Players.LocalPlayer
+
+-- MAIN GUI
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "SKIDGUI_PRO"
+screenGui.Parent = player:WaitForChild("PlayerGui")
+screenGui.ResetOnSpawn = false
+
+-- MAIN FRAME
+local mainFrame = Instance.new("Frame")
+mainFrame.Size = UDim2.new(0, 700, 0, 600)
+mainFrame.Position = UDim2.new(0.5, -350, 0.5, -300)
+mainFrame.BackgroundColor3 = Color3.fromRGB(30,30,30)
+mainFrame.BorderSizePixel = 0
+mainFrame.Parent = screenGui
+mainFrame.Active = true
+mainFrame.Draggable = true
+mainFrame.ClipsDescendants = true
+
+-- Rounded corners
+local mainCorner = Instance.new("UICorner")
+mainCorner.CornerRadius = UDim.new(0, 15)
+mainCorner.Parent = mainFrame
+
+-- UI Gradient
+local mainGradient = Instance.new("UIGradient")
+mainGradient.Color = ColorSequence.new{
+    ColorSequenceKeypoint.new(0, Color3.fromRGB(40,40,40)),
+    ColorSequenceKeypoint.new(1, Color3.fromRGB(20,20,20))
+}
+mainGradient.Parent = mainFrame
+
+-- DESTROY BUTTON
+local destroyBtn = Instance.new("TextButton")
+destroyBtn.Size = UDim2.new(0, 40, 0, 40)
+destroyBtn.Position = UDim2.new(1, -50, 0, 10)
+destroyBtn.Text = "❌"
+destroyBtn.TextColor3 = Color3.fromRGB(255,255,255)
+destroyBtn.BackgroundColor3 = Color3.fromRGB(200,0,0)
+destroyBtn.BorderSizePixel = 0
+destroyBtn.TextScaled = true
+destroyBtn.Parent = mainFrame
+
+local destroyCorner = Instance.new("UICorner")
+destroyCorner.CornerRadius = UDim.new(0,12)
+destroyCorner.Parent = destroyBtn
+
+destroyBtn.MouseButton1Click:Connect(function()
+    screenGui:Destroy()
+end)
+
+-- SCROLLABLE CONTENT FRAME
+local scrollFrame = Instance.new("ScrollingFrame")
+scrollFrame.Size = UDim2.new(1, -20, 1, -70)
+scrollFrame.Position = UDim2.new(0, 10, 0, 60)
+scrollFrame.CanvasSize = UDim2.new(0,0,2,0)
+scrollFrame.ScrollBarThickness = 10
+scrollFrame.BackgroundTransparency = 1
+scrollFrame.Parent = mainFrame
+
+-- UIListLayout
+local layout = Instance.new("UIListLayout")
+layout.Padding = UDim.new(0,10)
+layout.FillDirection = Enum.FillDirection.Vertical
+layout.SortOrder = Enum.SortOrder.LayoutOrder
+layout.Parent = scrollFrame
+
+-- FUNCTIONS
+local function showMessage(text)
+    local msgLabel = Instance.new("TextLabel")
+    msgLabel.Size = UDim2.new(0, 500, 0, 30)
+    msgLabel.Position = UDim2.new(0.5, -250, 1, -60)
+    msgLabel.BackgroundColor3 = Color3.fromRGB(50,50,50)
+    msgLabel.TextColor3 = Color3.fromRGB(0,255,0)
+    msgLabel.Text = text
+    msgLabel.TextScaled = true
+    msgLabel.BorderSizePixel = 0
+    msgLabel.Parent = mainFrame
+
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0,6)
+    corner.Parent = msgLabel
+
+    task.delay(2, function()
+        if msgLabel then msgLabel:Destroy() end
+    end)
+end
+
+local function createHeader(text)
+    local label = Instance.new("TextLabel")
+    label.Size = UDim2.new(1,0,0,30)
+    label.BackgroundTransparency = 1
+    label.Text = text
+    label.TextColor3 = Color3.fromRGB(255,255,255)
+    label.Font = Enum.Font.GothamBold
+    label.TextScaled = true
+    label.TextXAlignment = Enum.TextXAlignment.Left
+    label.Parent = scrollFrame
+    return label
+end
+
+local function createButton(text, callback)
+    local btn = Instance.new("TextButton")
+    btn.Size = UDim2.new(1,0,0,45)
+    btn.BackgroundColor3 = Color3.fromRGB(25,25,25)
+    btn.TextColor3 = Color3.fromRGB(255,255,255)
+    btn.Text = text
+    btn.Font = Enum.Font.Gotham
+    btn.TextScaled = true
+    btn.Parent = scrollFrame
+
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0,10)
+    corner.Parent = btn
+
+    local gradient = Instance.new("UIGradient")
+    gradient.Color = ColorSequence.new{
+        ColorSequenceKeypoint.new(0, Color3.fromRGB(80,30,200)),
+        ColorSequenceKeypoint.new(1, Color3.fromRGB(30,80,200))
+    }
+    gradient.Rotation = 45
+    gradient.Parent = btn
+
+    btn.MouseEnter:Connect(function()
+        btn.BackgroundColor3 = Color3.fromRGB(50,50,50)
+    end)
+    btn.MouseLeave:Connect(function()
+        btn.BackgroundColor3 = Color3.fromRGB(25,25,25)
+    end)
+
+    btn.MouseButton1Click:Connect(function()
+        local success, err = pcall(callback)
+        if not success then warn(err) end
+    end)
+    return btn
+end
+
+local function createTextbox(placeholder)
+    local box = Instance.new("TextBox")
+    box.Size = UDim2.new(1,0,0,40)
+    box.BackgroundColor3 = Color3.fromRGB(40,40,40)
+    box.TextColor3 = Color3.fromRGB(255,255,255)
+    box.PlaceholderText = placeholder
+    box.ClearTextOnFocus = false
+    box.TextScaled = true
+    box.Parent = scrollFrame
+
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0,10)
+    corner.Parent = box
+    return box
+end
+
+-- SECTIONS & BUTTONS
+createHeader("MOVEMENT")
+local wsBox = createTextbox("Input WalkSpeed (default 16)")
+local wsActive = false
+createButton("Toggle WalkSpeed Loop", function()
+    wsActive = not wsActive
+    showMessage("WalkSpeed Loop: "..(wsActive and "ON" or "OFF"))
+    if wsActive then
+        task.spawn(function()
+            while wsActive do
+                local speed = tonumber(wsBox.Text)
+                if speed and player.Character and player.Character:FindFirstChild("Humanoid") then
+                    player.Character.Humanoid.WalkSpeed = speed
+                end
+                task.wait(0.1)
+            end
+        end)
+    end
+end)
+
+createHeader("BASES")
+local tpBox = createTextbox("Input Base Number")
+createButton("TP To Base", function()
+    local n = tonumber(tpBox.Text)
+    if not n then return end
+    local base = workspace:FindFirstChild("Bases") and workspace.Bases:FindFirstChild("Base"..n)
+    if base and player.Character then
+        local part = base:FindFirstChild("MultiplierAmount")
+        if part then
+            player.Character:SetPrimaryPartCFrame(CFrame.new(part.Position + Vector3.new(0,5,0)))
+            showMessage("Teleported to Base "..n)
+        end
+    end
+end)
+createButton("Lock Base", function()
+    local n = tonumber(tpBox.Text)
+    if not n then return end
+    local base = workspace:FindFirstChild("Bases") and workspace.Bases:FindFirstChild("Base"..n)
+    if base and player.Character then
+        local lock = base:FindFirstChild("Lock")
+        if lock then
+            player.Character:SetPrimaryPartCFrame(CFrame.new(lock.Position + Vector3.new(0,5,0)))
+            showMessage("Locked Base "..n)
+        end
+    end
+end)
+
+createHeader("REWARDS")
+createButton("Get Inf Money", function()
+    game:GetService("ReplicatedStorage").LuckyTradePurchase:FireServer(-999999999999999)
+    showMessage("Infinite Money Triggered")
+end)
+createButton("Claim Free Rewards", function()
+    game:GetService("ReplicatedStorage").ClaimFreeReward:FireServer()
+    showMessage("Free Reward Claimed")
+end)
+createButton("Spin The Wheel", function()
+    game:GetService("ReplicatedStorage").SpinToWinRequest:FireServer()
+    showMessage("Wheel Spun")
+end)
+
+createHeader("MISC")
+createButton("Remove All Lasers", function()
+    for i=1,8 do
+        local base = workspace:FindFirstChild("Bases") and workspace.Bases:FindFirstChild("Base"..i)
+        if base then
+            for j=1,5 do
+                local lazer = base:FindFirstChild("Lazer"..j)
+                if lazer then lazer:Destroy() end
+            end
+        end
+    end
+    showMessage("All lasers removed 💥")
+end)
+createButton("Rebirth", function()
+    game:GetService("ReplicatedStorage").RebirthRemote:FireServer()
+    showMessage("Rebirth Triggered 🔄")
+end)
+
+-- CREDIT
+local credit = Instance.new("TextLabel")
+credit.Size = UDim2.new(0,250,0,25)
+credit.Position = UDim2.new(0,10,1,-30)
+credit.BackgroundTransparency = 1
+credit.TextColor3 = Color3.fromRGB(255,255,255)
+credit.Text = "Made by gw_jayy0061"
+credit.TextScaled = true
+credit.Parent = mainFrame
